@@ -12,6 +12,8 @@ import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -82,22 +84,7 @@ public class NoteServiceImpl implements NoteService {
     public NotePagedTO getAll(Integer page, Integer size) {
         Page<NoteEntity> noteEntityPage = noteRepository.findAll(PageRequest.of(page - 1, size));
 
-        // Build the page info
-        PageInfoTO pageInfoTO = new PageInfoTO();
-        pageInfoTO.setTotalElements(noteEntityPage.getTotalElements());
-        pageInfoTO.setTotalPages(noteEntityPage.getTotalPages());
-        pageInfoTO.setCurrentPage(page);
-        // Make the ternary in 2 lines
-        Integer nextPage = noteEntityPage.hasNext() ? page + 1 : null;
-        pageInfoTO.setNextPage(nextPage);
-        // Single line ternary
-        pageInfoTO.setPreviousPage(noteEntityPage.hasPrevious() ? page - 1 : null);
-
-        // Build the note paged
-        NotePagedTO notePagedTO = new NotePagedTO();
-        List<NoteEntity> noteEntityList = noteEntityPage.toList();
-        notePagedTO.setNoteTOList(noteEntityConverter.convertToListTO(noteEntityList));
-        notePagedTO.setPageInfoTO(pageInfoTO);
+        NotePagedTO notePagedTO = pageNote(page, noteEntityPage);
 
         return notePagedTO;
     }
@@ -118,6 +105,16 @@ public class NoteServiceImpl implements NoteService {
         NoteTO noteTO = noteEntityConverter.convertToTO(noteEntity);
         // Return the note to converted
         return noteTO;
+    }
+
+    @Override
+    public NotePagedTO findNoteByKeyWord(Integer page, Integer size, String keyWords) {
+        Pageable pageableRequest = PageRequest.of(page - 1, size, Sort.Direction.ASC, "id");
+        Page<NoteEntity> noteEntityPage = noteRepository.findByKeyWords(keyWords, pageableRequest);
+
+        NotePagedTO notePagedTO = pageNote(page, noteEntityPage);
+
+        return notePagedTO;
     }
 
     /**
@@ -151,5 +148,26 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public void deleteNoteById(Long id) {
         noteRepository.deleteById(id);
+    }
+
+    private NotePagedTO pageNote(Integer page, Page<NoteEntity> noteEntityPage) {
+        // Build the page info
+        PageInfoTO pageInfoTO = new PageInfoTO();
+        pageInfoTO.setTotalElements(noteEntityPage.getTotalElements());
+        pageInfoTO.setTotalPages(noteEntityPage.getTotalPages());
+        pageInfoTO.setCurrentPage(page);
+        // Make the ternary in 2 lines
+        Integer nextPage = noteEntityPage.hasNext() ? page + 1 : null;
+        pageInfoTO.setNextPage(nextPage);
+        // Single line ternary
+        pageInfoTO.setPreviousPage(noteEntityPage.hasPrevious() ? page - 1 : null);
+
+        // Build the note paged
+        NotePagedTO notePagedTO = new NotePagedTO();
+        List<NoteEntity> noteEntityList = noteEntityPage.toList();
+        notePagedTO.setNoteTOList(noteEntityConverter.convertToListTO(noteEntityList));
+        notePagedTO.setPageInfoTO(pageInfoTO);
+
+        return notePagedTO;
     }
 }

@@ -85,16 +85,7 @@ public class NoteController {
     public NotePagedResponse listPagedNote(@RequestParam Integer page, @RequestParam Integer size) {
         NotePagedTO notePagedTO = noteService.getAll(page, size);
 
-        // Manage the note list
-        List<NoteTO> noteTOList = notePagedTO.getNoteTOList();
-        List<NoteResponse> noteResponseList = noteResponseConverter.convertFromListTO(noteTOList);
-        // Manage pagination
-        PaginationResponse paginationResponse = paginationResponseConverter.convertFromTO(notePagedTO.getPageInfoTO());
-
-        // Build the note paged response
-        NotePagedResponse notePagedResponse = new NotePagedResponse();
-        notePagedResponse.setData(noteResponseList);
-        notePagedResponse.setPagination(paginationResponse);
+        NotePagedResponse notePagedResponse = pageSearchResponse(notePagedTO);
 
         return notePagedResponse;
     }
@@ -110,6 +101,15 @@ public class NoteController {
     public NoteResponse searchNote(@PathVariable Long id) throws NoteNotFoundException {
         NoteTO noteTO = noteService.findNoteById(id);
         return noteResponseConverter.convertFromTO(noteTO);
+    }
+
+    @GetMapping("/note/search")
+    public NotePagedResponse searchNoteKeyWord(@RequestParam Integer page, @RequestParam Integer size, @RequestParam String keywords) {
+         NotePagedTO notePagedTO = noteService.findNoteByKeyWord(page, size, keywords);
+
+         NotePagedResponse notePagedResponse = pageSearchResponse(notePagedTO);
+
+         return notePagedResponse;
     }
 
     /**
@@ -138,6 +138,21 @@ public class NoteController {
         noteService.deleteNoteById(id);
         MessageResponse messageResponse = new MessageResponse("Note deleted successfully");
         return messageResponse;
+    }
+
+    private NotePagedResponse pageSearchResponse(NotePagedTO notePagedTO) {
+        // Manage the note list
+        List<NoteTO> noteTOList = notePagedTO.getNoteTOList();
+        List<NoteResponse> noteResponseList = noteResponseConverter.convertFromListTO(noteTOList);
+        // Manage pagination
+        PaginationResponse paginationResponse = paginationResponseConverter.convertFromTO(notePagedTO.getPageInfoTO());
+
+        // Build the note paged response
+        NotePagedResponse notePagedResponse = new NotePagedResponse();
+        notePagedResponse.setData(noteResponseList);
+        notePagedResponse.setPagination(paginationResponse);
+
+        return notePagedResponse;
     }
 
 }

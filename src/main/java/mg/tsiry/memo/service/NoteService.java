@@ -46,6 +46,8 @@ public interface NoteService {
      */
     NoteTO findNoteById(Long id) throws NoteNotFoundException;
 
+    NotePagedTO findNoteByKeyWord(Integer page, Integer size, String keyWords);
+
     /**
      * Update the note.
      *
